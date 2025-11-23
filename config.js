@@ -12,8 +12,8 @@ const config = {
     'http://localhost:5173',
     process.env['ALLOWED_ORIGIN'],
   ],
-  JwtAccessExpiresAt: 60 * 15,
-  JwtRefreshExpiresAt: 1000 * 60 * 60 * 370,
+  JwtAccessExpiresAt: 15, // 15 minutes
+  JwtRefreshExpiresAt: 336, // 14 days
 };
 
 export default config;

@@ -1,6 +1,8 @@
 import express from 'express';
 import config from './config.js';
 import cors from 'cors';
+import usersRouter from './routes/users.js';
+import mongoose from 'mongoose';
 
 const app = express();
 const localhost = `http://localhost:${config.port}`;
@@ -12,12 +14,31 @@ app.get('/', (req, res) => {
   res.send('Server is up and running!');
 });
 
-app.use('/users', (await import('./routes/users.js')).default);
+app.use('/users', usersRouter);
 
 const run = async () => {
-  app.listen(config.port, () => {
-    console.log(`Server is running on ${localhost}`);
-  });
+  try {
+    await mongoose.connect(config.mongoose.db);
+    app.listen(config.port, (e) => {
+      if (!e) {
+        console.log(`Server is running on ${localhost}`);
+      } else {
+        console.log('Server Error:', e);
+      }
+    });
+
+    process.on('SIGINT', async () => {
+      await mongoose.disconnect();
+      console.log('MongoDB disconnected on app termination');
+      process.exit(0);
+    });
+  } catch (_e) {
+    process.on('uncaughtException', async (e) => {
+      await mongoose.disconnect();
+      console.log('Uncaught exception: ', e);
+      process.exit(1);
+    });
+  }
 };
 
 void run();

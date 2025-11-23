@@ -7,8 +7,7 @@ const UserSchema = new Schema(
   {
     username: {
       type: String,
-      required: true,
-      unique: true,
+      required: [true, 'Username is required'],
       trim: true,
     },
     roles: {
@@ -18,18 +17,14 @@ const UserSchema = new Schema(
     },
     email: {
       type: String,
-      required: true,
-      unique: true,
+      required: [true, 'Email is required'],
+      unique: [true, 'This email is already taken'],
       match: [/.+@.+\..+/, 'Please enter a valid email address'],
-    },
-    isActive: {
-      type: Boolean,
-      default: true,
     },
     password: {
       type: String,
-      required: true,
-      minlength: 6,
+      required: [true, 'Password is required'],
+      minlength: [5, 'Password must be at least 5 characters long'],
     },
   },
   { versionKey: false, timestamps: true }

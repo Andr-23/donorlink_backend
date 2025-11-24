@@ -2,6 +2,7 @@ import express from 'express';
 import config from './config.js';
 import cors from 'cors';
 import usersRouter from './routes/users.js';
+import authRouter from './routes/auth.js';
 import mongoose from 'mongoose';
 
 const app = express();
@@ -14,7 +15,8 @@ app.get('/', (req, res) => {
   res.send('Server is up and running!');
 });
 
-app.use('/users', usersRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/users', usersRouter);
 
 const run = async () => {
   try {

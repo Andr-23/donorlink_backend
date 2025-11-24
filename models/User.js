@@ -5,16 +5,6 @@ const SALT_WORK_FACTOR = 10;
 
 const UserSchema = new Schema(
   {
-    username: {
-      type: String,
-      required: [true, 'Username is required'],
-      trim: true,
-    },
-    roles: {
-      type: [String],
-      enum: ['user', 'admin'],
-      default: ['user'],
-    },
     email: {
       type: String,
       required: [true, 'Email is required'],
@@ -25,6 +15,11 @@ const UserSchema = new Schema(
       type: String,
       required: [true, 'Password is required'],
       minlength: [5, 'Password must be at least 5 characters long'],
+    },
+    roles: {
+      type: [String],
+      enum: ['user', 'admin'],
+      default: ['user'],
     },
   },
   { versionKey: false, timestamps: true }

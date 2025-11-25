@@ -3,19 +3,40 @@ import { configDotenv } from 'dotenv';
 import User from '../models/User.js';
 import auth from '../middleware/Auth.js';
 import permit from '../middleware/Permit.js';
+import checkNotBanned from '../middleware/CheckNotBanned.js';
 
 configDotenv();
 
 const usersRouter = express.Router();
 
-usersRouter.get('/:id', auth, permit(['admin']), async (req, res, next) => {
+usersRouter.get('/:id', auth, checkNotBanned, async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) {
       res.status(404).send({ error: 'User not found' });
       return;
     }
-    res.status(200).send(user);
+
+    if (
+      !req.user ||
+      (!req.user.roles.includes('admin') &&
+        String(req.user._id) !== String(user._id))
+    ) {
+      res.status(403).send({ error: 'Forbidden' });
+      return;
+    }
+
+    const { default: DonorProfile } = await import('../models/DonorProfile.js');
+
+    const donorProfile = await DonorProfile.findOne({
+      donorId: user._id,
+    }).lean();
+
+    const result = user.toObject();
+    delete result.password;
+    result.donorProfile = donorProfile || null;
+
+    res.status(200).send(result);
   } catch (e) {
     next(e);
   }

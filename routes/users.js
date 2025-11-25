@@ -1,7 +1,6 @@
 import express from 'express';
 import { configDotenv } from 'dotenv';
 import User from '../models/User.js';
-import { Error } from 'mongoose';
 import auth from '../middleware/Auth.js';
 import permit from '../middleware/Permit.js';
 
@@ -52,57 +51,39 @@ usersRouter.get('/', auth, permit(['admin']), async (req, res, next) => {
   }
 });
 
-usersRouter.put('/:id', auth, permit(['admin']), async (req, res, next) => {
-  try {
-    if (
-      req.user._id.toString() !== req.params.id &&
-      req.user.role !== 'admin'
-    ) {
-      res
-        .status(403)
-        .send({ error: 'You do not have permission to update this user' });
-      return;
-    }
-
-    const { email, password } = req.body;
-    const updateData = {};
-
-    if (email !== undefined) updateData.email = email;
-    if (password !== undefined) {
-      if (password.length < 5) {
-        res.status(400).send({ error: 'Password must be more than 5 symbols' });
+usersRouter.patch(
+  '/toggle-ban/:id',
+  auth,
+  permit(['admin']),
+  async (req, res, next) => {
+    try {
+      const user = await User.findById(req.params.id);
+      if (!user) {
+        res.status(404).send({ error: 'User not found' });
         return;
       }
-      updateData.password = password;
-    }
 
-    const user = await User.findByIdAndUpdate(req.params.id, updateData, {
-      new: true,
-      runValidators: true,
-    });
+      if (user.roles.includes('admin')) {
+        res.status(403).send({ error: 'Cannot ban an admin' });
+        return;
+      }
 
-    if (!user) {
-      res.status(404).send({ error: 'User not found' });
-      return;
-    }
+      if (String(req.user._id) === String(user._id)) {
+        res.status(403).send({ error: 'You cannot ban yourself' });
+        return;
+      }
 
-    res.status(200).send(user);
-  } catch (e) {
-    if (e instanceof Error.ValidationError) {
-      res.status(422).send({ error: e });
-      return;
+      user.banned = !Boolean(user.banned);
+      await user.save();
+
+      res.status(200).send({
+        message: `User ${user.banned ? 'banned' : 'unbanned'} successfully`,
+        user,
+      });
+    } catch (e) {
+      next(e);
     }
-    next(e);
   }
-});
-
-usersRouter.delete('/:id', auth, permit(['admin']), async (req, res, next) => {
-  try {
-    await User.findByIdAndDelete(req.params.id);
-    res.status(200).send({ message: 'User deleted successfully' });
-  } catch (e) {
-    next(e);
-  }
-});
+);
 
 export default usersRouter;

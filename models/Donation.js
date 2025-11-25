@@ -15,7 +15,7 @@ const DonationSchema = new mongoose.Schema(
     requestedAt: { type: Date, default: Date.now },
     scheduledFor: { type: Date },
     completedAt: { type: Date },
-    centerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Center' },
+    centerId: { type: mongoose.Schema.Types.ObjectId, ref: 'BloodCenter' },
     notes: { type: String },
   },
   { versionKey: false, timestamps: true }

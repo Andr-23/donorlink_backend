@@ -1,5 +1,4 @@
 const permit = (allowedRoles) => {
-  console.log(allowedRoles);
   return (req, res, next) => {
     const { user } = req;
     if (!user) {

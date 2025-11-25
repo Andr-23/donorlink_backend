@@ -21,6 +21,7 @@ const UserSchema = new Schema(
       enum: ['user', 'admin'],
       default: ['user'],
     },
+    banned: { type: Boolean, default: false },
   },
   { versionKey: false, timestamps: true }
 );

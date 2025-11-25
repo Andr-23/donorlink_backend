@@ -1,6 +1,9 @@
 import mongoose from 'mongoose';
 import config from './config.js';
 import User from './models/User.js';
+import BloodCenter from './models/BloodCenter.js';
+import DonorProfile from './models/DonorProfile.js';
+import Donation from './models/Donation.js';
 
 const dropCollection = async (db, collectionName) => {
   try {
@@ -10,7 +13,7 @@ const dropCollection = async (db, collectionName) => {
   }
 };
 
-const collections = ['users'];
+const collections = ['users', 'donorprofiles', 'bloodcenters', 'donations'];
 
 const run = async () => {
   try {
@@ -21,7 +24,7 @@ const run = async () => {
       await dropCollection(db, collectionName);
     }
 
-    await User.create([
+    const [user1, user2] = await User.create([
       {
         username: 'adminuser',
         email: 'admin@gmail.com',
@@ -33,6 +36,90 @@ const run = async () => {
         email: 'regular@gmail.com',
         password: 'regularpass',
         roles: ['user'],
+      },
+    ]);
+
+    await DonorProfile.create([
+      {
+        donorId: user1._id,
+        fullName: 'John Doe',
+        phone: '555-1234',
+        gender: 'male',
+        dateOfBirth: new Date('1990-01-01'),
+        bloodType: 'A+',
+        medicalHistory: 'No known conditions.',
+        donations: [],
+        lastDonationDate: new Date('2025-11-25'),
+        address: '123 Main St, Anytown',
+      },
+      {
+        donorId: user2._id,
+        fullName: 'Jane Smith',
+        phone: '555-5678',
+        gender: 'female',
+        dateOfBirth: new Date('1985-05-15'),
+        bloodType: 'O-',
+        medicalHistory: 'Allergic to penicillin.',
+        donations: [],
+        address: '456 Oak Ave, Sometown',
+      },
+    ]);
+
+    const [bloodCenter1, bloodCenter2] = await BloodCenter.create([
+      {
+        name: 'Family medicine center #15',
+        address: '1 Sukhe - Baatar St, Bishkek',
+        phone: '0312426962',
+        coordinates: {
+          latitude: 42.82597153514856,
+          longitude: 74.62418921818426,
+        },
+        workingHours: {
+          monday: { open: '08:00', close: '18:00' },
+          tuesday: { open: '08:00', close: '18:00' },
+          wednesday: { open: '08:00', close: '18:00' },
+          thursday: { open: '08:00', close: '18:00' },
+          friday: { open: '08:00', close: '18:00' },
+          saturday: { open: '10:00', close: '15:00' },
+          sunday: { open: 'Closed', close: 'Closed' },
+        },
+      },
+      {
+        name: 'Family Medicine Center No. 7',
+        address: '3 Тоголок Молдо, Bishkek',
+        phone: '0312301067',
+        coordinates: {
+          latitude: 42.87110975014566,
+          longitude: 74.5960968795279,
+        },
+        workingHours: {
+          monday: { open: '08:00', close: '17:00' },
+          tuesday: { open: '08:00', close: '17:00' },
+          wednesday: { open: '08:00', close: '17:00' },
+          thursday: { open: '08:00', close: '17:00' },
+          friday: { open: '08:00', close: '17:00' },
+          saturday: { open: 'Closed', close: 'Closed' },
+          sunday: { open: 'Closed', close: 'Closed' },
+        },
+      },
+    ]);
+
+    await Donation.create([
+      {
+        donorId: user1._id,
+        status: 'completed',
+        requestedAt: new Date('2025-11-24T10:00:00Z'),
+        scheduledFor: new Date('2025-11-25T10:00:00Z'),
+        completedAt: new Date('2025-11-25T10:30:00Z'),
+        centerId: bloodCenter1._id,
+        notes: 'First donation, went well.',
+      },
+      {
+        donorId: user2._id,
+        status: 'requested',
+        requestedAt: new Date('2025-11-23T10:00:00Z'),
+        scheduledFor: new Date('2025-11-26T10:00:00Z'),
+        centerId: bloodCenter2._id,
       },
     ]);
 

@@ -2,17 +2,17 @@ import express from 'express';
 import auth from '../middleware/Auth.js';
 import permit from '../middleware/Permit.js';
 import Donation from '../models/Donation.js';
-import checkNotBanned from '../middleware/CheckNotBanned.js';
+import { DONATION_STATUS } from '../constants.js';
 
 const donationsRouter = express.Router();
 
-donationsRouter.post('/', auth, checkNotBanned, async (req, res, next) => {
+donationsRouter.post('/', auth, async (req, res, next) => {
   try {
-    const { status, scheduledFor, centerId, notes } = req.body;
+    const { scheduledFor, centerId, notes } = req.body;
 
     const donation = new Donation({
       userId: req.user._id,
-      status: status || 'requested',
+      status: 'requested',
       scheduledFor,
       centerId,
       notes,
@@ -25,45 +25,40 @@ donationsRouter.post('/', auth, checkNotBanned, async (req, res, next) => {
   }
 });
 
-donationsRouter.get(
-  '/my-donations',
-  auth,
-  checkNotBanned,
-  async (req, res, next) => {
-    try {
-      const page = parseInt(req.query.page) || 1;
-      const limit = parseInt(req.query.limit) || 10;
-      const skip = (page - 1) * limit;
+donationsRouter.get('/my-donations', auth, async (req, res, next) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
-      const donations = await Donation.find({ userId: req.user._id })
-        .limit(limit)
-        .skip(skip)
-        .sort({ createdAt: -1 });
+    const donations = await Donation.find({ userId: req.user._id })
+      .limit(limit)
+      .skip(skip)
+      .sort({ createdAt: -1 });
 
-      const total = await Donation.countDocuments({ userId: req.user._id });
-      const totalPages = Math.ceil(total / limit);
+    const total = await Donation.countDocuments({ userId: req.user._id });
+    const totalPages = Math.ceil(total / limit);
 
-      res.status(200).send({
-        donations,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages,
-          hasNextPage: page < totalPages,
-          hasPrevPage: page > 1,
-        },
-      });
-    } catch (error) {
-      next(error);
-    }
+    res.status(200).send({
+      donations,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    });
+  } catch (error) {
+    next(error);
   }
-);
+});
 
 donationsRouter.get('/:id', auth, async (req, res, next) => {
   try {
     const donation = await Donation.findById(req.params.id)
-      .populate('userId', 'fullname')
+      .populate('userId', 'fullName bloodType')
       .populate('centerId', 'name address');
 
     if (!donation) {
@@ -93,6 +88,8 @@ donationsRouter.get('/', auth, permit(['admin']), async (req, res, next) => {
     const skip = (page - 1) * limit;
 
     const donations = await Donation.find()
+      .populate('userId', 'fullName bloodType')
+      .populate('centerId', 'name address')
       .limit(limit)
       .skip(skip)
       .sort({ createdAt: -1 });
@@ -118,13 +115,23 @@ donationsRouter.get('/', auth, permit(['admin']), async (req, res, next) => {
 
 donationsRouter.put('/:id', auth, permit(['admin']), async (req, res, next) => {
   try {
-    const { status, completedAt } = req.body;
+    const donation = await Donation.findById(req.params.id);
+
+    if (!donation) {
+      res.status(404).send({ error: 'Donation not found' });
+      return;
+    }
+
+    if (donation.status === 'completed') {
+      res.status(400).send({ error: 'Completed donation cannot be modified' });
+      return;
+    }
+
+    const { status, scheduledFor, notes, centerId } = req.body;
     const updateData = {};
 
     if (status !== undefined) {
-      if (
-        !['requested', 'confirmed', 'completed', 'canceled'].includes(status)
-      ) {
+      if (!DONATION_STATUS.includes(status)) {
         res.status(400).send({
           error:
             'Invalid status. Must be one of: requested, confirmed, completed, canceled',
@@ -132,24 +139,31 @@ donationsRouter.put('/:id', auth, permit(['admin']), async (req, res, next) => {
         return;
       }
       updateData.status = status;
-    }
 
-    if (completedAt !== undefined) {
-      updateData.completedAt = completedAt;
-    }
-
-    const donation = await Donation.findByIdAndUpdate(
-      req.params.id,
-      updateData,
-      {
-        new: true,
-        runValidators: true,
+      if (status === 'completed') {
+        updateData.completedAt = new Date();
       }
-    );
+    }
 
-    if (!donation) {
-      res.status(404).send({ error: 'Donation not found' });
-      return;
+    if (scheduledFor !== undefined) {
+      updateData.scheduledFor = scheduledFor;
+    }
+    if (notes !== undefined) {
+      updateData.notes = notes;
+    }
+    if (centerId !== undefined) {
+      updateData.centerId = centerId;
+    }
+
+    donation.set(updateData);
+    await donation.save();
+
+    if (status === 'completed') {
+      const User = (await import('../models/User.js')).default;
+      await User.findByIdAndUpdate(donation.userId.toString(), {
+        $inc: { donationCount: 1 },
+        $set: { lastDonationDate: new Date() },
+      });
     }
 
     res.status(200).send(donation);

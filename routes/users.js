@@ -3,15 +3,14 @@ import { configDotenv } from 'dotenv';
 import User from '../models/User.js';
 import auth from '../middleware/Auth.js';
 import permit from '../middleware/Permit.js';
-import checkNotBanned from '../middleware/CheckNotBanned.js';
 
 configDotenv();
 
 const usersRouter = express.Router();
 
-usersRouter.get('/:id', auth, checkNotBanned, async (req, res, next) => {
+usersRouter.get('/:id', auth, async (req, res, next) => {
   try {
-    const user = await User.findById(req.params.id).lean();
+    const user = await User.findById(req.params.id).select('-password').lean();
     if (!user) {
       res.status(404).send({ error: 'User not found' });
       return;
@@ -73,23 +72,12 @@ usersRouter.patch(
         res.status(404).send({ error: 'User not found' });
         return;
       }
-
-      if (user.roles.includes('admin')) {
-        res.status(403).send({ error: 'Cannot ban an admin' });
-        return;
-      }
-
-      if (String(req.user._id) === String(user._id)) {
-        res.status(403).send({ error: 'You cannot ban yourself' });
-        return;
-      }
-
-      user.banned = !Boolean(user.banned);
-      await user.save();
-
+      const updatedUser = await user.toggleBan();
       res.status(200).send({
-        message: `User ${user.banned ? 'banned' : 'unbanned'} successfully`,
-        user,
+        message: `User ${
+          updatedUser.status === 'banned' ? 'banned' : 'unbanned'
+        } successfully`,
+        user: updatedUser,
       });
     } catch (e) {
       next(e);

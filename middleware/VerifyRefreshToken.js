@@ -5,7 +5,7 @@ const verifyRefreshToken = async (req, res, next) => {
   const refreshToken = req.cookies?.refreshToken;
 
   if (!refreshToken) {
-    res.status(401).send({ error: 'Update refresh token' });
+    res.status(401).send({ error: 'Refresh token missing' });
     return;
   }
 
@@ -20,6 +20,11 @@ const verifyRefreshToken = async (req, res, next) => {
   const user = await User.findById(decoded.userId);
   if (!user) {
     res.status(401).send({ error: 'User not found' });
+    return;
+  }
+
+  if (user.status === 'banned') {
+    res.status(403).send({ message: 'User is banned' });
     return;
   }
 

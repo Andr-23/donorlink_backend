@@ -1,5 +1,6 @@
 import { Schema, model } from 'mongoose';
 import bcrypt from 'bcrypt';
+import { BLOOD_TYPES, USER_ROLES, USER_STATUS } from '../constants.js';
 
 const SALT_WORK_FACTOR = 10;
 
@@ -8,7 +9,7 @@ const UserSchema = new Schema(
     email: {
       type: String,
       required: [true, 'Email is required'],
-      unique: [true, 'This email is already taken'],
+      unique: true,
       match: [/.+@.+\..+/, 'Please enter a valid email address'],
     },
     password: {
@@ -18,26 +19,28 @@ const UserSchema = new Schema(
     },
     roles: {
       type: [String],
-      enum: ['user', 'admin'],
+      enum: USER_ROLES,
       default: ['user'],
+      validate: {
+        validator: (v) => Array.isArray(v) && new Set(v).size === v.length,
+        message: 'Roles must be unique',
+      },
     },
-    banned: { type: Boolean, default: false },
     fullName: { type: String, required: true },
     phone: { type: String, required: true },
     gender: { type: String, enum: ['male', 'female'], required: true },
     dateOfBirth: { type: Date, required: true },
     bloodType: {
       type: String,
-      enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],
+      enum: BLOOD_TYPES,
       required: true,
     },
     status: {
       type: String,
-      enum: ['active', 'inactive', 'banned'],
+      enum: USER_STATUS,
       default: 'active',
     },
     medicalHistory: { type: String },
-    donations: [{ type: Schema.Types.ObjectId, ref: 'Donation' }],
     donationCount: { type: Number, default: 0 },
     lastDonationDate: { type: Date },
     address: { type: String, required: true },
@@ -47,6 +50,12 @@ const UserSchema = new Schema(
 
 UserSchema.methods.checkPassword = async function (password) {
   return bcrypt.compare(password, this.password);
+};
+
+UserSchema.methods.toggleBan = function () {
+  if (this.roles.includes('admin')) throw new Error('Cannot ban an admin');
+  this.status = this.status === 'banned' ? 'active' : 'banned';
+  return this.save();
 };
 
 UserSchema.pre('save', async function (next) {

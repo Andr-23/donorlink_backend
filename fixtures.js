@@ -12,7 +12,7 @@ const dropCollection = async (db, collectionName) => {
   }
 };
 
-const collections = ['users', 'donorprofiles', 'bloodcenters', 'donations'];
+const collections = ['users', 'bloodcenters', 'donations'];
 
 const run = async () => {
   try {
@@ -35,7 +35,6 @@ const run = async () => {
         dateOfBirth: new Date('1990-01-01'),
         bloodType: 'A+',
         medicalHistory: 'No known conditions.',
-        donations: [],
         lastDonationDate: new Date('2025-11-25'),
         address: '123 Main St, Anytown',
       },
@@ -50,7 +49,6 @@ const run = async () => {
         dateOfBirth: new Date('1985-05-15'),
         bloodType: 'O-',
         medicalHistory: 'Allergic to penicillin.',
-        donations: [],
         address: '456 Oak Ave, Sometown',
       },
     ]);
@@ -98,7 +96,6 @@ const run = async () => {
       {
         userId: user1._id,
         status: 'completed',
-        requestedAt: new Date('2025-11-24T10:00:00Z'),
         scheduledFor: new Date('2025-11-25T10:00:00Z'),
         completedAt: new Date('2025-11-25T10:30:00Z'),
         centerId: bloodCenter1._id,
@@ -107,7 +104,6 @@ const run = async () => {
       {
         userId: user2._id,
         status: 'requested',
-        requestedAt: new Date('2025-11-23T10:00:00Z'),
         scheduledFor: new Date('2025-11-26T10:00:00Z'),
         centerId: bloodCenter2._id,
       },

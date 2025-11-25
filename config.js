@@ -13,7 +13,7 @@ const config = {
     process.env['ALLOWED_ORIGIN'],
   ],
   JwtAccessExpiresAt: 15, // 15 minutes
-  JwtRefreshExpiresAt: 336, // 14 days
+  JwtRefreshExpiresAt: 720, // 720 hours = 30 days
 };
 
 export default config;

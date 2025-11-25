@@ -2,7 +2,7 @@ import express from 'express';
 import { configDotenv } from 'dotenv';
 import User from '../models/User.js';
 import { Error } from 'mongoose';
-import auth from '../middleware/Auth.js';
+import verifyRefreshToken from '../middleware/VerifyRefreshToken.js';
 import jwt from 'jsonwebtoken';
 import config from '../config.js';
 
@@ -12,7 +12,16 @@ const authRouter = express.Router();
 
 authRouter.post('/register', async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const {
+      email,
+      password,
+      fullName,
+      phone,
+      gender,
+      dateOfBirth,
+      bloodType,
+      address,
+    } = req.body;
 
     const userExists = await User.findOne({ email });
     if (userExists) {
@@ -20,10 +29,37 @@ authRouter.post('/register', async (req, res, next) => {
       return;
     }
 
-    const user = new User({ email, password });
+    const user = new User({
+      email,
+      password,
+      fullName,
+      phone,
+      gender,
+      dateOfBirth,
+      bloodType,
+      address,
+    });
     await user.save();
 
-    res.status(201).send(user);
+    const accessToken = jwt.sign(
+      { userId: user._id },
+      `${process.env.JWT_ACCESS}`,
+      { expiresIn: `${config.JwtAccessExpiresAt}m` }
+    );
+    const refreshToken = jwt.sign(
+      { userId: user._id },
+      `${process.env.JWT_REFRESH}`,
+      { expiresIn: `${config.JwtRefreshExpiresAt}h` }
+    );
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'None',
+      maxAge: config.JwtRefreshExpiresAt * 60 * 60 * 1000, // Convert hours to milliseconds
+    });
+
+    res.status(201).send({ accessToken, user });
   } catch (e) {
     if (e instanceof Error.ValidationError) {
       res.status(422).send({ error: e });
@@ -55,7 +91,7 @@ authRouter.post('/login', async (req, res, next) => {
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: true,
-      sameSite: 'Strict',
+      sameSite: 'None',
       maxAge: config.JwtRefreshExpiresAt * 60 * 60 * 1000, // Convert hours to milliseconds
     });
 
@@ -65,12 +101,42 @@ authRouter.post('/login', async (req, res, next) => {
   }
 });
 
-authRouter.post('/logout', auth, async (req, res, next) => {
+authRouter.post('/refresh', verifyRefreshToken, async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      res.status(401).send({ error: 'User not found' });
+      return;
+    }
+    const accessToken = jwt.sign(
+      { userId: user._id },
+      `${process.env.JWT_ACCESS}`,
+      { expiresIn: `${config.JwtAccessExpiresAt}m` }
+    );
+    const refreshToken = jwt.sign(
+      { userId: user._id },
+      `${process.env.JWT_REFRESH}`,
+      { expiresIn: `${config.JwtRefreshExpiresAt}h` }
+    );
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'None',
+      maxAge: config.JwtRefreshExpiresAt * 60 * 60 * 1000, // Convert hours to milliseconds
+    });
+    res.status(200).send({ accessToken, user });
+  } catch (e) {
+    next(e);
+  }
+});
+
+authRouter.post('/logout', verifyRefreshToken, async (req, res, next) => {
   try {
     res.clearCookie('refreshToken', {
       httpOnly: true,
       secure: true,
-      sameSite: 'Strict',
+      sameSite: 'None',
     });
     res.status(200).send({ message: 'Logged out successfully' });
   } catch (e) {

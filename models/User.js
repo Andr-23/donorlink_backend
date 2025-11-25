@@ -22,6 +22,25 @@ const UserSchema = new Schema(
       default: ['user'],
     },
     banned: { type: Boolean, default: false },
+    fullName: { type: String, required: true },
+    phone: { type: String, required: true },
+    gender: { type: String, enum: ['male', 'female'], required: true },
+    dateOfBirth: { type: Date, required: true },
+    bloodType: {
+      type: String,
+      enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],
+      required: true,
+    },
+    status: {
+      type: String,
+      enum: ['active', 'inactive', 'banned'],
+      default: 'active',
+    },
+    medicalHistory: { type: String },
+    donations: [{ type: Schema.Types.ObjectId, ref: 'Donation' }],
+    donationCount: { type: Number, default: 0 },
+    lastDonationDate: { type: Date },
+    address: { type: String, required: true },
   },
   { versionKey: false, timestamps: true }
 );

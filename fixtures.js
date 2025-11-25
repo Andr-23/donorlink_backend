@@ -2,7 +2,6 @@ import mongoose from 'mongoose';
 import config from './config.js';
 import User from './models/User.js';
 import BloodCenter from './models/BloodCenter.js';
-import DonorProfile from './models/DonorProfile.js';
 import Donation from './models/Donation.js';
 
 const dropCollection = async (db, collectionName) => {
@@ -30,18 +29,6 @@ const run = async () => {
         email: 'admin@gmail.com',
         password: 'adminpass',
         roles: ['admin'],
-      },
-      {
-        username: 'regularuser',
-        email: 'regular@gmail.com',
-        password: 'regularpass',
-        roles: ['user'],
-      },
-    ]);
-
-    await DonorProfile.create([
-      {
-        donorId: user1._id,
         fullName: 'John Doe',
         phone: '555-1234',
         gender: 'male',
@@ -53,7 +40,10 @@ const run = async () => {
         address: '123 Main St, Anytown',
       },
       {
-        donorId: user2._id,
+        username: 'regularuser',
+        email: 'regular@gmail.com',
+        password: 'regularpass',
+        roles: ['user'],
         fullName: 'Jane Smith',
         phone: '555-5678',
         gender: 'female',
@@ -106,7 +96,7 @@ const run = async () => {
 
     await Donation.create([
       {
-        donorId: user1._id,
+        userId: user1._id,
         status: 'completed',
         requestedAt: new Date('2025-11-24T10:00:00Z'),
         scheduledFor: new Date('2025-11-25T10:00:00Z'),
@@ -115,7 +105,7 @@ const run = async () => {
         notes: 'First donation, went well.',
       },
       {
-        donorId: user2._id,
+        userId: user2._id,
         status: 'requested',
         requestedAt: new Date('2025-11-23T10:00:00Z'),
         scheduledFor: new Date('2025-11-26T10:00:00Z'),

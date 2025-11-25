@@ -3,13 +3,16 @@ import config from './config.js';
 import cors from 'cors';
 import usersRouter from './routes/users.js';
 import authRouter from './routes/auth.js';
+import donationsRouter from './routes/donations.js';
 import mongoose from 'mongoose';
+import cookieParser from 'cookie-parser';
 
 const app = express();
 const localhost = `http://localhost:${config.port}`;
 
 app.use(express.json());
 app.use(cors());
+app.use(cookieParser());
 
 app.get('/', (req, res) => {
   res.send('Server is up and running!');
@@ -17,6 +20,7 @@ app.get('/', (req, res) => {
 
 app.use('/api/auth', authRouter);
 app.use('/api/users', usersRouter);
+app.use('/api/donations', donationsRouter);
 
 const run = async () => {
   try {

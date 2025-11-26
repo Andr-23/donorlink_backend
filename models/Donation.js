@@ -13,9 +13,13 @@ const DonationSchema = new mongoose.Schema(
       enum: DONATION_STATUS,
       default: 'requested',
     },
-    scheduledFor: { type: Date },
+    scheduledFor: { type: Date, required: true },
     completedAt: { type: Date },
-    centerId: { type: mongoose.Schema.Types.ObjectId, ref: 'BloodCenter' },
+    centerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'BloodCenter',
+      required: true,
+    },
     notes: { type: String, maxlength: 1000 },
   },
   { versionKey: false, timestamps: true }

@@ -73,7 +73,13 @@ authRouter.post('/register', async (req, res, next) => {
 
 authRouter.post('/login', async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body || {};
+
+    if (!email || !password) {
+      res.status(400).send({ error: 'Email and password are required' });
+      return;
+    }
+
     const user = await User.findOne({ email });
     if (!user || !(await user.checkPassword(password))) {
       res.status(401).send({ error: 'Invalid email or password' });
@@ -88,6 +94,10 @@ authRouter.post('/login', async (req, res, next) => {
 
     res.status(200).send({ accessToken, user });
   } catch (e) {
+    if (e instanceof Error.ValidationError) {
+      res.status(422).send({ error: e });
+      return;
+    }
     next(e);
   }
 });

@@ -3,12 +3,18 @@ import auth from '../middleware/Auth.js';
 import permit from '../middleware/Permit.js';
 import Donation from '../models/Donation.js';
 import { DONATION_STATUS } from '../constants.js';
+import { Error, Types } from 'mongoose';
 
 const donationsRouter = express.Router();
 
 donationsRouter.post('/', auth, async (req, res, next) => {
   try {
     const { scheduledFor, centerId, notes } = req.body;
+
+    if (!Types.ObjectId.isValid(centerId)) {
+      res.status(400).send({ error: 'Invalid blood center id' });
+      return;
+    }
 
     const donation = new Donation({
       userId: req.user._id,
@@ -20,8 +26,12 @@ donationsRouter.post('/', auth, async (req, res, next) => {
 
     await donation.save();
     res.status(201).send(donation);
-  } catch (error) {
-    next(error);
+  } catch (e) {
+    if (e instanceof Error.ValidationError) {
+      res.status(422).send({ error: e });
+      return;
+    }
+    next(e);
   }
 });
 
@@ -50,8 +60,8 @@ donationsRouter.get('/my-donations', auth, async (req, res, next) => {
         hasPrevPage: page > 1,
       },
     });
-  } catch (error) {
-    next(error);
+  } catch (e) {
+    next(e);
   }
 });
 
@@ -108,8 +118,8 @@ donationsRouter.get('/', auth, permit(['admin']), async (req, res, next) => {
         hasPrevPage: page > 1,
       },
     });
-  } catch (error) {
-    next(error);
+  } catch (e) {
+    next(e);
   }
 });
 
@@ -167,8 +177,12 @@ donationsRouter.put('/:id', auth, permit(['admin']), async (req, res, next) => {
     }
 
     res.status(200).send(donation);
-  } catch (error) {
-    next(error);
+  } catch (e) {
+    if (e instanceof Error.ValidationError) {
+      res.status(422).send({ error: e });
+      return;
+    }
+    next(e);
   }
 });
 

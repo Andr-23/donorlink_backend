@@ -1,5 +1,6 @@
+import { configDotenv } from 'dotenv';
+configDotenv({ path: '.env' });
 import express from 'express';
-import config from './config.js';
 import cors from 'cors';
 import usersRouter from './routes/users.js';
 import authRouter from './routes/auth.js';
@@ -10,7 +11,7 @@ import cookieParser from 'cookie-parser';
 import { setupSwagger } from './swagger.js';
 
 const app = express();
-export const localhost = `http://localhost:${config.port}`;
+const PORT = process.env.PORT || 8000;
 
 app.use(express.json());
 app.use(cors());
@@ -29,27 +30,16 @@ setupSwagger(app);
 
 const run = async () => {
   try {
-    await mongoose.connect(config.mongoose.db);
-    app.listen(config.port, (e) => {
-      if (!e) {
-        console.log(`Server is running on ${localhost}`);
-      } else {
-        console.log('Server Error:', e);
-      }
-    });
+    await mongoose.connect(process.env.MONGO_DB_URL);
+    console.log('MongoDB connected');
 
-    process.on('SIGINT', async () => {
-      await mongoose.disconnect();
-      console.log('MongoDB disconnected on app termination');
-      process.exit(0);
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
     });
-  } catch (_e) {
-    process.on('uncaughtException', async (e) => {
-      await mongoose.disconnect();
-      console.log('Uncaught exception: ', e);
-      process.exit(1);
-    });
+  } catch (err) {
+    console.error('Startup error:', err);
+    process.exit(1);
   }
 };
 
-void run();
+run();

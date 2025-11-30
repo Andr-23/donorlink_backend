@@ -1,6 +1,7 @@
 import swaggerJSDoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import { localhost } from './index.js';
+import { bloodCenterSchemas } from './routes/bloodcenter.js';
 
 export const setupSwagger = (app) => {
   const options = {
@@ -159,6 +160,7 @@ export const setupSwagger = (app) => {
               },
             },
           },
+          ...bloodCenterSchemas,
         },
       },
     },

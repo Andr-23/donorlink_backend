@@ -19,6 +19,7 @@ const BloodCenterSchema = new mongoose.Schema(
       sunday: { open: { type: String }, close: { type: String } },
     },
     currentDonorCount: { type: Number, default: 0 },
+    archived: { type: Boolean, default: false },
   },
   { versionKey: false, timestamps: true }
 );

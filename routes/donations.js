@@ -9,7 +9,7 @@ const donationsRouter = express.Router();
 
 /**
  * @openapi
- * /donations:
+ * /api/donations:
  *   post:
  *     summary: Create a new blood donation request
  *     tags: [Donations]
@@ -37,15 +37,32 @@ const donationsRouter = express.Router();
  *                 example: "Feeling well."
  *     responses:
  *       201:
- *         description: Donation created successfully
+ *         description: Donation created successfully (status will be set to "requested")
  *         content:
  *           application/json:
  *             schema:
  *               $ref: "#/components/schemas/Donation"
  *       400:
- *         description: Invalid center ID
+ *         description: Invalid blood center id or blood center is not available
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Invalid blood center id"
+ *       401:
+ *         description: Unauthorized — authentication required
  *       422:
  *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: object
  */
 
 donationsRouter.post('/', auth, async (req, res, next) => {
@@ -54,6 +71,17 @@ donationsRouter.post('/', auth, async (req, res, next) => {
 
     if (!Types.ObjectId.isValid(centerId)) {
       res.status(400).send({ error: 'Invalid blood center id' });
+      return;
+    }
+
+    const BloodCenter = (await import('../models/BloodCenter.js')).default;
+    const center = await BloodCenter.findById(centerId);
+    if (!center) {
+      res.status(400).send({ error: 'Invalid blood center id' });
+      return;
+    }
+    if (center.archived) {
+      res.status(400).send({ error: 'Blood center is not available' });
       return;
     }
 
@@ -78,7 +106,7 @@ donationsRouter.post('/', auth, async (req, res, next) => {
 
 /**
  * @openapi
- * /donations/my-donations:
+ * /api/donations/my-donations:
  *   get:
  *     summary: Get authenticated user's donation records
  *     tags: [Donations]
@@ -158,7 +186,7 @@ donationsRouter.get('/my-donations', auth, async (req, res, next) => {
 
 /**
  * @openapi
- * /donations/{id}:
+ * /api/donations/{id}:
  *   get:
  *     summary: Get a donation by ID
  *     tags: [Donations]
@@ -178,14 +206,45 @@ donationsRouter.get('/my-donations', auth, async (req, res, next) => {
  *           application/json:
  *             schema:
  *               $ref: "#/components/schemas/Donation"
+ *       400:
+ *         description: Invalid ID format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Invalid ID format
  *       403:
- *         description: User does not have permission to view this donation
+ *         description: You do not have permission to view this donation
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: You do not have permission to view this donation
  *       404:
  *         description: Donation not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Donation not found
  */
 
 donationsRouter.get('/:id', auth, async (req, res, next) => {
   try {
+    if (!Types.ObjectId.isValid(req.params.id)) {
+      res.status(400).send({ error: 'Invalid ID format' });
+      return;
+    }
+
     const donation = await Donation.findById(req.params.id)
       .populate('userId', 'fullName bloodType')
       .populate('centerId', 'name address');
@@ -212,7 +271,7 @@ donationsRouter.get('/:id', auth, async (req, res, next) => {
 
 /**
  * @openapi
- * /donations:
+ * /api/donations:
  *   get:
  *     summary: Get all donations (admin only)
  *     tags: [Donations]
@@ -294,7 +353,7 @@ donationsRouter.get('/', auth, permit(['admin']), async (req, res, next) => {
 
 /**
  * @openapi
- * /donations/{id}:
+ * /api/donations/{id}:
  *   put:
  *     summary: Update a donation (admin only)
  *     tags: [Donations]
@@ -336,7 +395,7 @@ donationsRouter.get('/', auth, permit(['admin']), async (req, res, next) => {
  *             schema:
  *               $ref: "#/components/schemas/Donation"
  *       400:
- *         description: Invalid status or donation already completed
+ *         description: Invalid status or donation already completed or invalid ID format or invalid blood center id or blood center is not available
  *       404:
  *         description: Donation not found
  *       422:
@@ -345,6 +404,10 @@ donationsRouter.get('/', auth, permit(['admin']), async (req, res, next) => {
 
 donationsRouter.put('/:id', auth, permit(['admin']), async (req, res, next) => {
   try {
+    if (!Types.ObjectId.isValid(req.params.id)) {
+      res.status(400).send({ error: 'Invalid ID format' });
+      return;
+    }
     const donation = await Donation.findById(req.params.id);
 
     if (!donation) {
@@ -359,6 +422,17 @@ donationsRouter.put('/:id', auth, permit(['admin']), async (req, res, next) => {
 
     const { status, scheduledFor, notes, centerId } = req.body;
     const updateData = {};
+
+    const BloodCenter = (await import('../models/BloodCenter.js')).default;
+    const center = await BloodCenter.findById(centerId);
+    if (!center) {
+      res.status(400).send({ error: 'Invalid blood center id' });
+      return;
+    }
+    if (center.archived) {
+      res.status(400).send({ error: 'Blood center is not available' });
+      return;
+    }
 
     if (status !== undefined) {
       if (!DONATION_STATUS.includes(status)) {

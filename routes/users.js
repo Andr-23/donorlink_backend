@@ -3,6 +3,7 @@ import { configDotenv } from 'dotenv';
 import User from '../models/User.js';
 import auth from '../middleware/Auth.js';
 import permit from '../middleware/Permit.js';
+import { Types } from 'mongoose';
 
 configDotenv();
 
@@ -10,7 +11,7 @@ const usersRouter = express.Router();
 
 /**
  * @swagger
- * /users/{id}:
+ * /api/users/{id}:
  *   get:
  *     summary: Get a user by ID
  *     tags: [Users]
@@ -30,6 +31,8 @@ const usersRouter = express.Router();
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Invalid ID format
  *       403:
  *         description: Forbidden — only self or admin can access
  *       404:
@@ -38,6 +41,10 @@ const usersRouter = express.Router();
 
 usersRouter.get('/:id', auth, async (req, res, next) => {
   try {
+    if (!Types.ObjectId.isValid(req.params.id)) {
+      res.status(400).send({ error: 'Invalid ID format' });
+      return;
+    }
     const user = await User.findById(req.params.id).select('-password').lean();
     if (!user) {
       res.status(404).send({ error: 'User not found' });
@@ -61,7 +68,7 @@ usersRouter.get('/:id', auth, async (req, res, next) => {
 
 /**
  * @swagger
- * /users:
+ * /api/users:
  *   get:
  *     summary: Get all users (admin only)
  *     tags: [Users]
@@ -128,7 +135,7 @@ usersRouter.get('/', auth, permit(['admin']), async (req, res, next) => {
 
 /**
  * @swagger
- * /users/toggle-ban/{id}:
+ * /api/users/toggle-ban/{id}:
  *   patch:
  *     summary: Toggle ban/unban for a user (admin only)
  *     tags: [Users]
@@ -144,6 +151,8 @@ usersRouter.get('/', auth, permit(['admin']), async (req, res, next) => {
  *     responses:
  *       200:
  *         description: User ban status toggled
+ *       400:
+ *         description: Invalid ID format
  *       404:
  *         description: User not found
  *       403:
@@ -156,6 +165,10 @@ usersRouter.patch(
   permit(['admin']),
   async (req, res, next) => {
     try {
+      if (!Types.ObjectId.isValid(req.params.id)) {
+        res.status(400).send({ error: 'Invalid ID format' });
+        return;
+      }
       const user = await User.findById(req.params.id);
       if (!user) {
         res.status(404).send({ error: 'User not found' });
@@ -169,6 +182,7 @@ usersRouter.patch(
         user: updatedUser,
       });
     } catch (e) {
+      res.status(400).send({ error: e.message });
       next(e);
     }
   }
@@ -176,7 +190,7 @@ usersRouter.patch(
 
 /**
  * @swagger
- * /users/{id}:
+ * /api/users/{id}:
  *   put:
  *     summary: Update profile (self or admin)
  *     tags: [Users]
@@ -194,12 +208,51 @@ usersRouter.patch(
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/UserUpdate'
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *               fullName:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               gender:
+ *                 type: string
+ *               dateOfBirth:
+ *                 type: string
+ *                 format: date
+ *               bloodType:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               medicalHistory:
+ *                 type: string
+ *           examples:
+ *             fullUpdateExample:
+ *               summary: Full profile update
+ *               value:
+ *                 email: john.doe@example.com
+ *                 fullName: John Doe
+ *                 phone: '1234567890'
+ *                 gender: male
+ *                 dateOfBirth: '1990-05-15'
+ *                 bloodType: O+
+ *                 address: 123 Main St, City, Country
+ *                 medicalHistory: No major illnesses
+ *             partialUpdateExample:
+ *               summary: Partial profile update
+ *               value:
+ *                 fullName: Jane Smith
+ *                 phone: '0987654321'
  *     responses:
  *       200:
  *         description: Updated user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
  *       400:
- *         description: Email already taken
+ *         description: Email already taken or invalid ID format
  *       403:
  *         description: Forbidden
  *       404:
@@ -210,6 +263,10 @@ usersRouter.patch(
 
 usersRouter.put('/:id', auth, async (req, res, next) => {
   try {
+    if (!Types.ObjectId.isValid(req.params.id)) {
+      res.status(400).send({ error: 'Invalid ID format' });
+      return;
+    }
     const allowed = [
       'email',
       'fullName',

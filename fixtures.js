@@ -62,7 +62,7 @@ const run = async () => {
           latitude: 42.82597153514856,
           longitude: 74.62418921818426,
         },
-        workingHours: {
+        operatingHours: {
           monday: { open: '08:00', close: '18:00' },
           tuesday: { open: '08:00', close: '18:00' },
           wednesday: { open: '08:00', close: '18:00' },
@@ -80,7 +80,7 @@ const run = async () => {
           latitude: 42.87110975014566,
           longitude: 74.5960968795279,
         },
-        workingHours: {
+        operatingHours: {
           monday: { open: '08:00', close: '17:00' },
           tuesday: { open: '08:00', close: '17:00' },
           wednesday: { open: '08:00', close: '17:00' },

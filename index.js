@@ -4,6 +4,7 @@ import cors from 'cors';
 import usersRouter from './routes/users.js';
 import authRouter from './routes/auth.js';
 import donationsRouter from './routes/donations.js';
+import bloodCenterRouter from './routes/bloodcenter.js';
 import mongoose from 'mongoose';
 import cookieParser from 'cookie-parser';
 import { setupSwagger } from './swagger.js';
@@ -22,6 +23,7 @@ app.get('/', (req, res) => {
 app.use('/api/auth', authRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/donations', donationsRouter);
+app.use('/api/blood-centers', bloodCenterRouter);
 
 setupSwagger(app);
 

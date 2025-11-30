@@ -8,6 +8,34 @@ configDotenv();
 
 const usersRouter = express.Router();
 
+/**
+ * @swagger
+ * /users/{id}:
+ *   get:
+ *     summary: Get a user by ID
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: User data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       403:
+ *         description: Forbidden — only self or admin can access
+ *       404:
+ *         description: User not found
+ */
+
 usersRouter.get('/:id', auth, async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id).select('-password').lean();
@@ -30,6 +58,43 @@ usersRouter.get('/:id', auth, async (req, res, next) => {
     next(e);
   }
 });
+
+/**
+ * @swagger
+ * /users:
+ *   get:
+ *     summary: Get all users (admin only)
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Page size
+ *     responses:
+ *       200:
+ *         description: List of users with pagination
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 users:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/User'
+ *                 pagination:
+ *                   type: object
+ *       403:
+ *         description: Forbidden
+ */
 
 usersRouter.get('/', auth, permit(['admin']), async (req, res, next) => {
   try {
@@ -61,6 +126,30 @@ usersRouter.get('/', auth, permit(['admin']), async (req, res, next) => {
   }
 });
 
+/**
+ * @swagger
+ * /users/toggle-ban/{id}:
+ *   patch:
+ *     summary: Toggle ban/unban for a user (admin only)
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: User ban status toggled
+ *       404:
+ *         description: User not found
+ *       403:
+ *         description: Forbidden
+ */
+
 usersRouter.patch(
   '/toggle-ban/:id',
   auth,
@@ -84,6 +173,40 @@ usersRouter.patch(
     }
   }
 );
+
+/**
+ * @swagger
+ * /users/{id}:
+ *   put:
+ *     summary: Update profile (self or admin)
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/UserUpdate'
+ *     responses:
+ *       200:
+ *         description: Updated user
+ *       400:
+ *         description: Email already taken
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: User not found
+ *       422:
+ *         description: Validation error
+ */
 
 usersRouter.put('/:id', auth, async (req, res, next) => {
   try {

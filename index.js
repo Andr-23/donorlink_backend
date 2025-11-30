@@ -6,9 +6,10 @@ import authRouter from './routes/auth.js';
 import donationsRouter from './routes/donations.js';
 import mongoose from 'mongoose';
 import cookieParser from 'cookie-parser';
+import { setupSwagger } from './swagger.js';
 
 const app = express();
-const localhost = `http://localhost:${config.port}`;
+export const localhost = `http://localhost:${config.port}`;
 
 app.use(express.json());
 app.use(cors());
@@ -21,6 +22,8 @@ app.get('/', (req, res) => {
 app.use('/api/auth', authRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/donations', donationsRouter);
+
+setupSwagger(app);
 
 const run = async () => {
   try {

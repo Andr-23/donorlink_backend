@@ -22,6 +22,75 @@ const generateTokens = (userId) => {
   return { accessToken, refreshToken };
 };
 
+/**
+ * @openapi
+ * /api/auth/register:
+ *   post:
+ *     summary: Register a new user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *               - fullName
+ *               - phone
+ *               - gender
+ *               - dateOfBirth
+ *               - bloodType
+ *               - address
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: user@example.com
+ *               password:
+ *                 type: string
+ *                 example: mypassword123
+ *               fullName:
+ *                 type: string
+ *                 example: John Doe
+ *               phone:
+ *                 type: string
+ *                 example: "+996555123123"
+ *               gender:
+ *                 type: string
+ *                 enum: [male, female]
+ *               dateOfBirth:
+ *                 type: string
+ *                 format: date
+ *                 example: "1995-05-12"
+ *               bloodType:
+ *                 type: string
+ *                 example: "A+"
+ *               address:
+ *                 type: string
+ *                 example: "Bishkek, Kyrgyzstan"
+ *               medicalHistory:
+ *                 type: string
+ *                 example: "No chronic diseases"
+ *     responses:
+ *       201:
+ *         description: User registered successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 accessToken:
+ *                   type: string
+ *                   example: "eyJhbGciOiJIUzI1NiIsInR5..."
+ *                 user:
+ *                   $ref: "#/components/schemas/User"
+ *       400:
+ *         description: Email already exists
+ *       422:
+ *         description: Validation error
+ */
+
 authRouter.post('/register', async (req, res, next) => {
   try {
     const {
@@ -71,6 +140,45 @@ authRouter.post('/register', async (req, res, next) => {
   }
 });
 
+/**
+ * @openapi
+ * /api/auth/login:
+ *   post:
+ *     summary: Login user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 example: user@example.com
+ *               password:
+ *                 type: string
+ *                 example: mypassword123
+ *     responses:
+ *       200:
+ *         description: Successful login
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 accessToken:
+ *                   type: string
+ *                 user:
+ *                   $ref: "#/components/schemas/User"
+ *       401:
+ *         description: Invalid email or password
+ */
+
+
 authRouter.post('/login', async (req, res, next) => {
   try {
     const { email, password } = req.body || {};
@@ -102,6 +210,31 @@ authRouter.post('/login', async (req, res, next) => {
   }
 });
 
+/**
+ * @openapi
+ * /api/auth/refresh:
+ *   post:
+ *     summary: Refresh access token
+ *     tags: [Auth]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: New access token issued
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 accessToken:
+ *                   type: string
+ *                 user:
+ *                   $ref: "#/components/schemas/User"
+ *       401:
+ *         description: Invalid or expired refresh token
+ */
+
+
 authRouter.post('/refresh', verifyRefreshToken, async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id);
@@ -121,6 +254,20 @@ authRouter.post('/refresh', verifyRefreshToken, async (req, res, next) => {
     next(e);
   }
 });
+
+/**
+ * @openapi
+ * /api/auth/logout:
+ *   post:
+ *     summary: Logout user
+ *     tags: [Auth]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Logged out successfully
+ */
+
 
 authRouter.post('/logout', verifyRefreshToken, async (req, res, next) => {
   try {

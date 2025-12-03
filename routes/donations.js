@@ -7,64 +7,6 @@ import { Error, Types } from 'mongoose';
 
 const donationsRouter = express.Router();
 
-/**
- * @openapi
- * /api/donations:
- *   post:
- *     summary: Create a new blood donation request
- *     tags: [Donations]
- *     security:
- *       - BearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - scheduledFor
- *               - centerId
- *             properties:
- *               scheduledFor:
- *                 type: string
- *                 format: date-time
- *                 example: "2025-01-20T10:30:00.000Z"
- *               centerId:
- *                 type: string
- *                 example: "6740e12321cc9b0012efabcd"
- *               notes:
- *                 type: string
- *                 example: "Feeling well."
- *     responses:
- *       201:
- *         description: Donation created successfully (status will be set to "requested")
- *         content:
- *           application/json:
- *             schema:
- *               $ref: "#/components/schemas/Donation"
- *       400:
- *         description: Invalid blood center id or blood center is not available
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "Invalid blood center id"
- *       401:
- *         description: Unauthorized — authentication required
- *       422:
- *         description: Validation error
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: object
- */
-
 donationsRouter.post('/', auth, async (req, res, next) => {
   try {
     const { scheduledFor, centerId, notes } = req.body;
@@ -104,56 +46,6 @@ donationsRouter.post('/', auth, async (req, res, next) => {
   }
 });
 
-/**
- * @openapi
- * /api/donations/my-donations:
- *   get:
- *     summary: Get authenticated user's donation records
- *     tags: [Donations]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: query
- *         name: page
- *         required: false
- *         schema:
- *           type: integer
- *           example: 1
- *       - in: query
- *         name: limit
- *         required: false
- *         schema:
- *           type: integer
- *           example: 10
- *     responses:
- *       200:
- *         description: List of user's donations with pagination
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 donations:
- *                   type: array
- *                   items:
- *                     $ref: "#/components/schemas/Donation"
- *                 pagination:
- *                   type: object
- *                   properties:
- *                     page:
- *                       type: integer
- *                     limit:
- *                       type: integer
- *                     total:
- *                       type: integer
- *                     totalPages:
- *                       type: integer
- *                     hasNextPage:
- *                       type: boolean
- *                     hasPrevPage:
- *                       type: boolean
- */
-
 donationsRouter.get('/my-donations', auth, async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -183,60 +75,6 @@ donationsRouter.get('/my-donations', auth, async (req, res, next) => {
     next(e);
   }
 });
-
-/**
- * @openapi
- * /api/donations/{id}:
- *   get:
- *     summary: Get a donation by ID
- *     tags: [Donations]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: Donation ID
- *     responses:
- *       200:
- *         description: Donation details
- *         content:
- *           application/json:
- *             schema:
- *               $ref: "#/components/schemas/Donation"
- *       400:
- *         description: Invalid ID format
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: Invalid ID format
- *       403:
- *         description: You do not have permission to view this donation
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: You do not have permission to view this donation
- *       404:
- *         description: Donation not found
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: Donation not found
- */
 
 donationsRouter.get('/:id', auth, async (req, res, next) => {
   try {
@@ -269,56 +107,6 @@ donationsRouter.get('/:id', auth, async (req, res, next) => {
   }
 });
 
-/**
- * @openapi
- * /api/donations:
- *   get:
- *     summary: Get all donations (admin only)
- *     tags: [Donations]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           example: 1
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           example: 10
- *     responses:
- *       200:
- *         description: List of donations with pagination
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 donations:
- *                   type: array
- *                   items:
- *                     $ref: "#/components/schemas/Donation"
- *                 pagination:
- *                   type: object
- *                   properties:
- *                     page:
- *                       type: integer
- *                     limit:
- *                       type: integer
- *                     total:
- *                       type: integer
- *                     totalPages:
- *                       type: integer
- *                     hasNextPage:
- *                       type: boolean
- *                     hasPrevPage:
- *                       type: boolean
- *       403:
- *         description: Forbidden — Admin only
- */
-
 donationsRouter.get('/', auth, permit(['admin']), async (req, res, next) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -350,57 +138,6 @@ donationsRouter.get('/', auth, permit(['admin']), async (req, res, next) => {
     next(e);
   }
 });
-
-/**
- * @openapi
- * /api/donations/{id}:
- *   put:
- *     summary: Update a donation (admin only)
- *     tags: [Donations]
- *     security:
- *       - BearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: Donation ID
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               status:
- *                 type: string
- *                 enum: ["requested", "confirmed", "completed", "canceled"]
- *                 example: "confirmed"
- *               scheduledFor:
- *                 type: string
- *                 format: date-time
- *                 example: "2025-04-10T09:00:00.000Z"
- *               notes:
- *                 type: string
- *                 example: "Rescheduled due to donor request."
- *               centerId:
- *                 type: string
- *                 example: "6740e12321cc9b0012efabcd"
- *     responses:
- *       200:
- *         description: Donation updated successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: "#/components/schemas/Donation"
- *       400:
- *         description: Invalid status or donation already completed or invalid ID format or invalid blood center id or blood center is not available
- *       404:
- *         description: Donation not found
- *       422:
- *         description: Validation error
- */
 
 donationsRouter.put('/:id', auth, permit(['admin']), async (req, res, next) => {
   try {
@@ -481,3 +218,266 @@ donationsRouter.put('/:id', auth, permit(['admin']), async (req, res, next) => {
 });
 
 export default donationsRouter;
+
+/**
+ * @openapi
+ * /api/donations:
+ *   post:
+ *     summary: Create a new blood donation request
+ *     tags: [Donations]
+ *     security:
+ *       - BearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - scheduledFor
+ *               - centerId
+ *             properties:
+ *               scheduledFor:
+ *                 type: string
+ *                 format: date-time
+ *                 example: "2025-01-20T10:30:00.000Z"
+ *               centerId:
+ *                 type: string
+ *                 example: "6740e12321cc9b0012efabcd"
+ *               notes:
+ *                 type: string
+ *                 example: "Feeling well."
+ *     responses:
+ *       201:
+ *         description: Donation created successfully (status will be set to "requested")
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Donation"
+ *       400:
+ *         description: Invalid blood center id or blood center is not available
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Invalid blood center id"
+ *       401:
+ *         description: Unauthorized — authentication required
+ *       422:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: object
+ */
+
+/**
+ * @openapi
+ * /api/donations/my-donations:
+ *   get:
+ *     summary: Get authenticated user's donation records
+ *     tags: [Donations]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         schema:
+ *           type: integer
+ *           example: 10
+ *     responses:
+ *       200:
+ *         description: List of user's donations with pagination
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 donations:
+ *                   type: array
+ *                   items:
+ *                     $ref: "#/components/schemas/Donation"
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     total:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *                     hasNextPage:
+ *                       type: boolean
+ *                     hasPrevPage:
+ *                       type: boolean
+ */
+
+/**
+ * @openapi
+ * /api/donations/{id}:
+ *   get:
+ *     summary: Get a donation by ID
+ *     tags: [Donations]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Donation ID
+ *     responses:
+ *       200:
+ *         description: Donation details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Donation"
+ *       400:
+ *         description: Invalid ID format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Invalid ID format
+ *       403:
+ *         description: You do not have permission to view this donation
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: You do not have permission to view this donation
+ *       404:
+ *         description: Donation not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Donation not found
+ */
+
+/**
+ * @openapi
+ * /api/donations:
+ *   get:
+ *     summary: Get all donations (admin only)
+ *     tags: [Donations]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           example: 10
+ *     responses:
+ *       200:
+ *         description: List of donations with pagination
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 donations:
+ *                   type: array
+ *                   items:
+ *                     $ref: "#/components/schemas/Donation"
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     total:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *                     hasNextPage:
+ *                       type: boolean
+ *                     hasPrevPage:
+ *                       type: boolean
+ *       403:
+ *         description: Forbidden — Admin only
+ */
+
+/**
+ * @openapi
+ * /api/donations/{id}:
+ *   put:
+ *     summary: Update a donation (admin only)
+ *     tags: [Donations]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Donation ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: ["requested", "confirmed", "completed", "canceled"]
+ *                 example: "confirmed"
+ *               scheduledFor:
+ *                 type: string
+ *                 format: date-time
+ *                 example: "2025-04-10T09:00:00.000Z"
+ *               notes:
+ *                 type: string
+ *                 example: "Rescheduled due to donor request."
+ *               centerId:
+ *                 type: string
+ *                 example: "6740e12321cc9b0012efabcd"
+ *     responses:
+ *       200:
+ *         description: Donation updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: "#/components/schemas/Donation"
+ *       400:
+ *         description: Invalid status or donation already completed or invalid ID format or invalid blood center id or blood center is not available
+ *       404:
+ *         description: Donation not found
+ *       422:
+ *         description: Validation error
+ */

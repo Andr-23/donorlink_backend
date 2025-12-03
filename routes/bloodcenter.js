@@ -355,7 +355,7 @@ export { bloodCenterSchemas };
  * @swagger
  * /api/blood-centers:
  *   post:
- *     summary: Create a new blood center
+ *     summary: Create a new blood center (admin only)
  *     security:
  *       - BearerAuth: []
  *     tags: [Blood Centers]
@@ -457,7 +457,7 @@ export { bloodCenterSchemas };
  * @swagger
  * /api/blood-centers/{id}:
  *   put:
- *     summary: Update blood center
+ *     summary: Update blood center by ID (admin only)
  *     security:
  *       - BearerAuth: []
  *     tags: [Blood Centers]
@@ -494,7 +494,7 @@ export { bloodCenterSchemas };
  * @swagger
  * /api/blood-centers/{id}/archive:
  *   patch:
- *     summary: Archive or unarchive blood center
+ *     summary: Archive or unarchive blood center (admin only)
  *     security:
  *       - BearerAuth: []
  *     tags: [Blood Centers]

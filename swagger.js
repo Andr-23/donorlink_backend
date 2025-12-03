@@ -14,6 +14,11 @@ export const setupSwagger = (app) => {
       servers: [
         {
           url: 'http://localhost:8000',
+          description: 'Local server',
+        },
+        {
+          url: process.env.PRODUCTION_URL || '',
+          description: 'Production server',
         },
       ],
       components: {

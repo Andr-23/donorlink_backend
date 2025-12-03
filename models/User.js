@@ -58,6 +58,18 @@ UserSchema.methods.toggleBan = function () {
   return this.save();
 };
 
+UserSchema.methods.toggleAdmin = function () {
+  if (this.status === 'banned' && !this.roles.includes('admin')) {
+    throw new Error('Cannot grant admin role to a banned user');
+  }
+  if (this.roles.includes('admin')) {
+    this.roles = this.roles.filter((role) => role !== 'admin');
+  } else {
+    this.roles.push('admin');
+  }
+  return this.save();
+};
+
 UserSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
 

@@ -9,9 +9,9 @@ import bloodCenterRouter from './routes/bloodcenter.js';
 import mongoose from 'mongoose';
 import cookieParser from 'cookie-parser';
 import { setupSwagger } from './swagger.js';
+import config from './config.js';
 
 const app = express();
-const PORT = process.env.PORT || 8000;
 
 app.use(express.json());
 app.use(cors());
@@ -30,11 +30,11 @@ setupSwagger(app);
 
 const run = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_DB_URL);
+    await mongoose.connect(config.mongoose.db);
     console.log('MongoDB connected');
 
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+    app.listen(config.port, () => {
+      console.log(`Server running on port ${config.port}`);
     });
   } catch (err) {
     console.error('Startup error:', err);

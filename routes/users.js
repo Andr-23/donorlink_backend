@@ -185,7 +185,111 @@ usersRouter.patch(
   }
 );
 
+usersRouter.patch('/reset-password/:id', auth, async (req, res, next) => {
+  try {
+    if (!Types.ObjectId.isValid(req.params.id)) {
+      res.status(400).send({ error: 'Invalid ID format' });
+      return;
+    }
+
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+      res
+        .status(400)
+        .send({ error: 'Old password and new password are required' });
+      return;
+    }
+
+    if (oldPassword === newPassword) {
+      res
+        .status(400)
+        .send({ error: 'New password must be different from old password' });
+      return;
+    }
+
+    if (!req.user || String(req.user._id) !== String(req.params.id)) {
+      res.status(403).send({ error: 'Forbidden' });
+      return;
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      res.status(404).send({ error: 'User not found' });
+      return;
+    }
+
+    const isPasswordValid = await user.checkPassword(oldPassword);
+    if (!isPasswordValid) {
+      res.status(401).send({ error: 'Old password is incorrect' });
+      return;
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).send({ message: 'Password reset successfully' });
+  } catch (e) {
+    res.status(400).send({ error: e.message });
+    next(e);
+  }
+});
+
 export default usersRouter;
+
+/**
+ * @swagger
+ * /api/users/reset-password/{id}:
+ *   patch:
+ *     summary: Reset user password (self)
+ *     tags: [Users]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               oldPassword:
+ *                 type: string
+ *                 description: Current password
+ *               newPassword:
+ *                 type: string
+ *                 description: New password (must be different from old)
+ *             required:
+ *               - oldPassword
+ *               - newPassword
+ *           example:
+ *             oldPassword: currentPassword123
+ *             newPassword: newPassword456
+ *     responses:
+ *       200:
+ *         description: Password reset successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Invalid ID format, missing fields, or same password
+ *       401:
+ *         description: Old password is incorrect
+ *       403:
+ *         description: Forbidden — only self can reset
+ *       404:
+ *         description: User not found
+ */
 
 /**
  * @swagger

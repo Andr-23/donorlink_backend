@@ -5,6 +5,7 @@ A blood donation management system REST API built with Express.js and MongoDB. D
 ## Table of Contents
 
 - [Overview](#overview)
+- [ER Diagram](#er-diagram)
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Installation](#installation)
@@ -27,6 +28,10 @@ DonorLink Backend provides a comprehensive REST API for managing blood donations
 - **Blood Center Management**: Manage blood center locations, operating hours, and donor capacity
 - **Authentication & Authorization**: JWT-based authentication with refresh token support and role-based access control
 - **API Documentation**: Auto-generated Swagger/OpenAPI documentation
+
+## ER Diagram
+
+![DonorLink er diagram](https://i.postimg.cc/MpKBz1yd/er-diagram.png)
 
 ## Tech Stack
 
